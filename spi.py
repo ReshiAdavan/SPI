@@ -1,4 +1,4 @@
-"""SPI - Simple Pascal Interpreter"""
+"""SPI - Simple Pascal Interpreter."""
 
 import argparse
 import sys
@@ -11,6 +11,7 @@ class ErrorCode(Enum):
     UNEXPECTED_TOKEN = 'Unexpected token'
     ID_NOT_FOUND = 'Identifier not found'
     DUPLICATE_ID = 'Duplicate id found'
+    WRONG_PARAMS_NUM = 'Wrong number of arguments'
 
 
 class Error(Exception):
@@ -80,7 +81,7 @@ class Token(object):
         """String representation of the class instance.
 
         Example:
-            Token(TokenType.INTEGER, 7, lineno=5, column=10)
+            >>> Token(TokenType.INTEGER, 7, lineno=5, column=10)
             Token(TokenType.INTEGER, 7, position=5:10)
         """
         return 'Token({type}, {value}, position={lineno}:{column})'.format(
@@ -371,6 +372,13 @@ class ProcedureDecl(AST):
         self.block_node = block_node
 
 
+class ProcedureCall(AST):
+    def __init__(self, proc_name, actual_params, token):
+        self.proc_name = proc_name
+        self.actual_params = actual_params  # a list of AST nodes
+        self.token = token
+
+
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
@@ -556,15 +564,46 @@ class Parser(object):
     def statement(self):
         """
         statement : compound_statement
+                  | proccall_statement
                   | assignment_statement
                   | empty
         """
         if self.current_token.type == TokenType.BEGIN:
             node = self.compound_statement()
+        elif (self.current_token.type == TokenType.ID and
+              self.lexer.current_char == '('
+        ):
+            node = self.proccall_statement()
         elif self.current_token.type == TokenType.ID:
             node = self.assignment_statement()
         else:
             node = self.empty()
+        return node
+
+    def proccall_statement(self):
+        """proccall_statement : ID LPAREN (expr (COMMA expr)*)? RPAREN"""
+        token = self.current_token
+
+        proc_name = self.current_token.value
+        self.eat(TokenType.ID)
+        self.eat(TokenType.LPAREN)
+        actual_params = []
+        if self.current_token.type != TokenType.RPAREN:
+            node = self.expr()
+            actual_params.append(node)
+
+        while self.current_token.type == TokenType.COMMA:
+            self.eat(TokenType.COMMA)
+            node = self.expr()
+            actual_params.append(node)
+
+        self.eat(TokenType.RPAREN)
+
+        node = ProcedureCall(
+            proc_name=proc_name,
+            actual_params=actual_params,
+            token=token,
+        )
         return node
 
     def assignment_statement(self):
@@ -686,8 +725,11 @@ class Parser(object):
                        | statement SEMI statement_list
 
         statement : compound_statement
+                  | proccall_statement
                   | assignment_statement
                   | empty
+
+        proccall_statement : ID LPAREN (expr (COMMA expr)*)? RPAREN
 
         assignment_statement : variable ASSIGN expr
 
@@ -961,6 +1003,19 @@ class SemanticAnalyzer(NodeVisitor):
     def visit_UnaryOp(self, node):
         pass
 
+    def visit_ProcedureCall(self, node):
+        proc_symbol = self.current_scope.lookup(node.proc_name)
+        formal_params = proc_symbol.params
+        actual_params = node.actual_params
+
+        if len(actual_params) != len(formal_params):
+            self.error(
+                error_code=ErrorCode.WRONG_PARAMS_NUM,
+                token=node.token,
+            )
+
+        for param_node in node.actual_params:
+            self.visit(param_node)
 
 ###############################################################################
 #                                                                             #
@@ -1029,6 +1084,9 @@ class Interpreter(NodeVisitor):
         pass
 
     def visit_ProcedureDecl(self, node):
+        pass
+
+    def visit_ProcedureCall(self, node):
         pass
 
     def interpret(self):
