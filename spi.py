@@ -10,8 +10,8 @@ _SHOULD_LOG_STACK = False  # see '--stack' command line option
 
 class ErrorCode(Enum):
     UNEXPECTED_TOKEN = 'Unexpected token'
-    ID_NOT_FOUND     = 'Identifier not found'
-    DUPLICATE_ID     = 'Duplicate id found'
+    ID_NOT_FOUND = 'Identifier not found'
+    DUPLICATE_ID = 'Duplicate id found'
 
 
 class Error(Exception):
@@ -43,31 +43,31 @@ class SemanticError(Error):
 
 class TokenType(Enum):
     # single-character token types
-    PLUS          = '+'
-    MINUS         = '-'
-    MUL           = '*'
-    FLOAT_DIV     = '/'
-    LPAREN        = '('
-    RPAREN        = ')'
-    SEMI          = ';'
-    DOT           = '.'
-    COLON         = ':'
-    COMMA         = ','
+    PLUS = '+'
+    MINUS = '-'
+    MUL = '*'
+    FLOAT_DIV = '/'
+    LPAREN = '('
+    RPAREN = ')'
+    SEMI = ';'
+    DOT = '.'
+    COLON = ':'
+    COMMA = ','
     # block of reserved words
-    PROGRAM       = 'PROGRAM'  # marks the beginning of the block
-    INTEGER       = 'INTEGER'
-    REAL          = 'REAL'
-    INTEGER_DIV   = 'DIV'
-    VAR           = 'VAR'
-    PROCEDURE     = 'PROCEDURE'
-    BEGIN         = 'BEGIN'
-    END           = 'END'      # marks the end of the block
+    PROGRAM = 'PROGRAM'  # marks the beginning of the block
+    INTEGER = 'INTEGER'
+    REAL = 'REAL'
+    INTEGER_DIV = 'DIV'
+    VAR = 'VAR'
+    PROCEDURE = 'PROCEDURE'
+    BEGIN = 'BEGIN'
+    END = 'END'  # marks the end of the block
     # misc
-    ID            = 'ID'
+    ID = 'ID'
     INTEGER_CONST = 'INTEGER_CONST'
-    REAL_CONST    = 'REAL_CONST'
-    ASSIGN        = ':='
-    EOF           = 'EOF'
+    REAL_CONST = 'REAL_CONST'
+    ASSIGN = ':='
+    EOF = 'EOF'
 
 
 class Token:
@@ -78,10 +78,11 @@ class Token:
         self.column = column
 
     def __str__(self):
-        """String representation of the class instance.
+        """
+        String representation of the class instance.
 
         Example:
-            >>> Token(TokenType.INTEGER, 7, lineno=5, column=10)
+            Token(TokenType.INTEGER, 7, lineno=5, column=10)
             Token(TokenType.INTEGER, 7, position=5:10)
         """
         return 'Token({type}, {value}, position={lineno}:{column})'.format(
@@ -96,7 +97,8 @@ class Token:
 
 
 def _build_reserved_keywords():
-    """Build a dictionary of reserved keywords.
+    """
+    Build a dictionary of reserved keywords.
 
     The function relies on the fact that in the TokenType
     enumeration the beginning of the block of reserved keywords is
@@ -176,7 +178,7 @@ class Lexer:
         self.advance()  # the closing curly brace
 
     def number(self):
-        """Return a (multidigit) integer or float consumed from the input."""
+        """Return a (multi-digit) integer or float consumed from the input."""
 
         # Create a new token with current line and column number
         token = Token(type=None, value=None, lineno=self.lineno, column=self.column)
@@ -225,7 +227,8 @@ class Lexer:
         return token
 
     def get_next_token(self):
-        """Lexical analyzer (also known as scanner or tokenizer)
+        """
+        Lexical analyzer (also known as scanner or tokenizer)
 
         This method is responsible for breaking a sentence
         apart into tokens. One token at a time.
@@ -311,6 +314,7 @@ class UnaryOp(AST):
 
 class Compound(AST):
     """Represents a 'BEGIN ... END' block"""
+
     def __init__(self):
         self.children = []
 
@@ -324,6 +328,7 @@ class Assign(AST):
 
 class Var(AST):
     """The Var node is constructed out of ID token."""
+
     def __init__(self, token):
         self.token = token
         self.value = token.value
@@ -427,9 +432,7 @@ class Parser:
         return node
 
     def declarations(self):
-        """
-        declarations : (VAR (variable_declaration SEMI)+)? procedure_declaration*
-        """
+        """declarations : (VAR (variable_declaration SEMI)+)? procedure_declaration*"""
         declarations = []
 
         if self.current_token.type == TokenType.VAR:
@@ -446,7 +449,7 @@ class Parser:
         return declarations
 
     def formal_parameters(self):
-        """ formal_parameters : ID (COMMA ID)* COLON type_spec """
+        """formal_parameters : ID (COMMA ID)* COLON type_spec"""
         param_nodes = []
 
         param_tokens = [self.current_token]
@@ -466,7 +469,8 @@ class Parser:
         return param_nodes
 
     def formal_parameter_list(self):
-        """ formal_parameter_list : formal_parameters
+        """
+        formal_parameter_list : formal_parameters
                                   | formal_parameters SEMI formal_parameter_list
         """
         # procedure Foo();
@@ -501,7 +505,8 @@ class Parser:
         return var_declarations
 
     def procedure_declaration(self):
-        """procedure_declaration :
+        """
+        procedure_declaration :
              PROCEDURE ID (LPAREN formal_parameter_list RPAREN)? SEMI block SEMI
         """
         self.eat(TokenType.PROCEDURE)
@@ -521,7 +526,8 @@ class Parser:
         return proc_decl
 
     def type_spec(self):
-        """type_spec : INTEGER
+        """
+        type_spec : INTEGER
                      | REAL
         """
         token = self.current_token
@@ -533,9 +539,7 @@ class Parser:
         return node
 
     def compound_statement(self):
-        """
-        compound_statement: BEGIN statement_list END
-        """
+        """compound_statement: BEGIN statement_list END"""
         self.eat(TokenType.BEGIN)
         nodes = self.statement_list()
         self.eat(TokenType.END)
@@ -607,9 +611,7 @@ class Parser:
         return node
 
     def assignment_statement(self):
-        """
-        assignment_statement : variable ASSIGN expr
-        """
+        """assignment_statement : variable ASSIGN expr"""
         left = self.variable()
         token = self.current_token
         self.eat(TokenType.ASSIGN)
@@ -618,9 +620,7 @@ class Parser:
         return node
 
     def variable(self):
-        """
-        variable : ID
-        """
+        """variable : ID"""
         node = Var(self.current_token)
         self.eat(TokenType.ID)
         return node
@@ -630,9 +630,7 @@ class Parser:
         return NoOp()
 
     def expr(self):
-        """
-        expr : term ((PLUS | MINUS) term)*
-        """
+        """expr : term ((PLUS | MINUS) term)*"""
         node = self.term()
 
         while self.current_token.type in (TokenType.PLUS, TokenType.MINUS):
@@ -668,7 +666,8 @@ class Parser:
         return node
 
     def factor(self):
-        """factor : PLUS factor
+        """
+        factor : PLUS factor
                   | MINUS factor
                   | INTEGER_CONST
                   | REAL_CONST
@@ -702,50 +701,33 @@ class Parser:
     def parse(self):
         """
         program : PROGRAM variable SEMI block DOT
-
         block : declarations compound_statement
-
         declarations : (VAR (variable_declaration SEMI)+)? procedure_declaration*
-
         variable_declaration : ID (COMMA ID)* COLON type_spec
-
         procedure_declaration :
              PROCEDURE ID (LPAREN formal_parameter_list RPAREN)? SEMI block SEMI
-
         formal_params_list : formal_parameters
                            | formal_parameters SEMI formal_parameter_list
-
         formal_parameters : ID (COMMA ID)* COLON type_spec
-
         type_spec : INTEGER | REAL
-
         compound_statement : BEGIN statement_list END
-
         statement_list : statement
                        | statement SEMI statement_list
-
         statement : compound_statement
                   | proccall_statement
                   | assignment_statement
                   | empty
-
         proccall_statement : ID LPAREN (expr (COMMA expr)*)? RPAREN
-
         assignment_statement : variable ASSIGN expr
-
         empty :
-
         expr : term ((PLUS | MINUS) term)*
-
         term : factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)*
-
         factor : PLUS factor
                | MINUS factor
                | INTEGER_CONST
                | REAL_CONST
                | LPAREN expr RPAREN
                | variable
-
         variable: ID
         """
         node = self.program()
@@ -848,11 +830,11 @@ class ScopedSymbolTable:
         h1 = 'SCOPE (SCOPED SYMBOL TABLE)'
         lines = ['\n', h1, '=' * len(h1)]
         for header_name, header_value in (
-            ('Scope name', self.scope_name),
-            ('Scope level', self.scope_level),
-            ('Enclosing scope',
-             self.enclosing_scope.scope_name if self.enclosing_scope else None
-            )
+                ('Scope name', self.scope_name),
+                ('Scope level', self.scope_level),
+                ('Enclosing scope',
+                 self.enclosing_scope.scope_name if self.enclosing_scope else None
+                 )
         ):
             lines.append(f'{header_name:<15}: {header_value}')
         h2 = 'Scope (Scoped symbol table) contents'
@@ -1027,7 +1009,7 @@ class SemanticAnalyzer(NodeVisitor):
 
 
 class ARType(Enum):
-    PROGRAM   = 'PROGRAM'
+    PROGRAM = 'PROGRAM'
     PROCEDURE = 'PROCEDURE'
 
 
