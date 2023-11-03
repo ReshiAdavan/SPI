@@ -21,19 +21,6 @@ class Error(Exception):
         # add exception class name before the message
         self.message = f'{self.__class__.__name__}: {message}'
 
-
-class LexerError(Error):
-    pass
-
-
-class ParserError(Error):
-    pass
-
-
-class SemanticError(Error):
-    pass
-
-
 ###############################################################################
 #                                                                             #
 #  LEXER                                                                      #
@@ -289,9 +276,6 @@ class Lexer:
 #  PARSER                                                                     #
 #                                                                             #
 ###############################################################################
-class AST:
-    pass
-
 
 class BinOp(AST):
     def __init__(self, left, op, right):
@@ -332,11 +316,6 @@ class Var(AST):
     def __init__(self, token):
         self.token = token
         self.value = token.value
-
-
-class NoOp(AST):
-    pass
-
 
 class Program(AST):
     def __init__(self, name, block):
@@ -916,9 +895,6 @@ class SemanticAnalyzer(NodeVisitor):
         for child in node.children:
             self.visit(child)
 
-    def visit_NoOp(self, node):
-        pass
-
     def visit_BinOp(self, node):
         self.visit(node.left)
         self.visit(node.right)
@@ -985,12 +961,6 @@ class SemanticAnalyzer(NodeVisitor):
         var_symbol = self.current_scope.lookup(var_name)
         if var_symbol is None:
             self.error(error_code=ErrorCode.ID_NOT_FOUND, token=node.token)
-
-    def visit_Num(self, node):
-        pass
-
-    def visit_UnaryOp(self, node):
-        pass
 
     def visit_ProcedureCall(self, node):
         for param_node in node.actual_params:
@@ -1151,12 +1121,6 @@ class Interpreter(NodeVisitor):
         var_value = ar.get(var_name)
 
         return var_value
-
-    def visit_NoOp(self, node):
-        pass
-
-    def visit_ProcedureDecl(self, node):
-        pass
 
     def visit_ProcedureCall(self, node):
         proc_name = node.proc_name
