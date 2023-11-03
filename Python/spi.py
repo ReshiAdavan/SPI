@@ -1159,28 +1159,17 @@ class Interpreter(NodeVisitor):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='SPI - Simple Pascal Interpreter'
-    )
+    parser = argparse.ArgumentParser(description='SPI - Simple Pascal Interpreter')
     parser.add_argument('inputfile', help='Pascal source file')
-    parser.add_argument(
-        '--scope',
-        help='Print scope information',
-        action='store_true',
-    )
-    parser.add_argument(
-        '--stack',
-        help='Print call stack',
-        action='store_true',
-    )
+    parser.add_argument('--scope', help='Print scope information', action='store_true',)
+    parser.add_argument('--stack', help='Print call stack', action='store_true',)
     args = parser.parse_args()
 
     global _SHOULD_LOG_SCOPE, _SHOULD_LOG_STACK
     _SHOULD_LOG_SCOPE, _SHOULD_LOG_STACK = args.scope, args.stack
-
     text = open(args.inputfile, 'r').read()
-
     lexer = Lexer(text)
+
     try:
         parser = Parser(lexer)
         tree = parser.parse()
@@ -1189,6 +1178,7 @@ def main():
         sys.exit(1)
 
     semantic_analyzer = SemanticAnalyzer()
+    
     try:
         semantic_analyzer.visit(tree)
     except SemanticError as e:
